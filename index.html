@@ -1,0 +1,113 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<!--
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+-->
+<title>monoimgmaker</title>
+<meta property="og:title" content="monoimgmaker">
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://code4fukui.github.io/monoimgmaker/monoimgmaker.png">
+<meta property="og:image"  content="https://code4fukui.github.io/monoimgmaker/monoimgmaker.png">
+<script type="module">
+import { downloadZip } from "https://code4sabae.github.io/js/downloadZip.js";
+import { waitDropFiles } from "https://code4sabae.github.io/js/waitDropFiles.js";
+import { downloadFile } from "https://code4sabae.github.io/js/downloadFile.js";
+import { readAsArrayBufferAsync } from "https://code4sabae.github.io/js/readAsArrayBufferAsync.js";
+import { ImageUtil } from "https://code4fukui.github.io/ImageUtil/ImageUtil.js";
+
+const getImageData = (img) => {
+  const iw = img.width;
+  const ih = img.height;
+  const canvas = document.createElement("canvas");
+  canvas.width = iw;
+  canvas.height = ih;
+  const g = canvas.getContext("2d");
+  g.drawImage(img, 0, 0, iw, ih);
+  const data = g.getImageData(0, 0, iw, ih);
+  return data;
+};
+
+const convertToMono = (img) => {
+  const res = new Uint8Array(img.width * img.height / 8);
+  for (let i = 0; i < img.height; i++) {
+    for (let j = 0; j < img.width; j++) {
+      const c = img.data[i * 4 * img.width + j * 4 + 1];
+      res[(j >> 3) + i * (img.width / 8)] |= c < 100 ? (1 << (7 - (j & 0x7))) : 0;
+    }
+  }
+  return { data: res, width: img.width, height: img.height };
+};
+
+const img2c = (img) => {
+  const s = [];
+  for (let i = 0; i < img.height; i++) {
+    for (let j = 0; j < img.width / 8; j++) {
+      const c = img.data[i * img.width / 8 + j].toString(16);
+      s.push(c.length == 1 ? "0x0" + c : "0x" + c);
+    }
+  }
+  return '#include "ImageData.h"\nconst unsigned char gImage_7in5_V2[48000] = {\n' + s.join(", ") + "\n};";
+};
+
+window.onload = async () => {
+  for (;;) {
+    divmain.innerHTML = "画像ファイルをドロップしてください(JPG/PNG)";
+    const items = await waitDropFiles(divmain);
+    const files = [];
+    for (const item of items) {
+      // console.log(item.type); // ignore item.type in Windows
+      if (!(item.file.name.endsWith(".jpg") || item.file.name.endsWith(".jpeg") || item.file.name.endsWith(".png"))) {
+        alert("ファイル形式が違います。画像ファイルをドロップしてください。")
+        return;
+      }
+      try {
+        const file = item.file;
+        const bin = await readAsArrayBufferAsync(file);
+        const img = await ImageUtil.getImageFromArrayBuffer(bin);
+        const data = getImageData(img);
+        console.log(data);
+        const mono = convertToMono(data);
+        console.log(mono);
+        const txt = img2c(mono);
+        //output.value = txt;
+        downloadFile("ImageData.c", txt);
+      } catch (e) {
+        console.log(e);
+        alert(`画像ファイル"${item.file.name}"の読み込みや変換に失敗しました。データが正常かご確認ください。`);
+        return;
+      }
+    }
+    /*
+    if (files.length == 1) {
+      downloadFile(files[0].name, files[0].data);
+    } else {
+      downloadZip("jpgs.zip", files);
+    }
+    */
+  }
+};
+</script>
+</head>
+<body>
+  
+<div class="jumbotron">
+  <h1 class="display-4">monoimgmaker</h1>
+  <p class="lead">画像ファイルをモノクロのC言語ソースファイルに変換します</p>
+</div>
+
+<div class="mx-5">
+  <div id="divmain" class="border px-5 mx-auto pt-3 pb-3"></div>
+</div>
+
+<footer class="text-muted">
+  <div class="container my-4 mx-0">
+  <p>Design: <a href="https://getbootstrap.com/">Bootstrap</a> by <a href="https://twitter.com/mdo">@mdo</a></p>
+  <p>App: CC BY <a href="https://fukuno.jig.jp/3448">福野泰介の一日一創</a> by <a href="https://twitter.com/taisukef">@taisukef</a> (<a href=https://github.com/code4fukui/monoimgmaker/>src on GitHub</a>)</p>
+  <p>Related: <a href=https://code4sabae.github.io/csvbeauty/>csvbeauty</a>, <a href=https://code4fukui.github.io/txtbeauty/>txtbeauty</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
