@@ -1,5 +1,7 @@
 # monoimgmaker
 
+> 日本語のREADMEはこちらです: [README.ja.md](README.ja.md)
+
 Converts image files to monochrome C language source files.
 
 ## Demo
