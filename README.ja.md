@@ -6,7 +6,7 @@
 https://code4fukui.github.io/monoimgmaker/
 
 ## 機能
-- JPG/PNG形式の画像ファイルを受け取ります
+- JPG/PNG形式の画像ファイルを受け取り
 - 画像をモノクロに変換し、C言語のソースコードとしてダウンロードできます
 
 ## 使い方

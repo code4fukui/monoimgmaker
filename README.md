@@ -16,4 +16,4 @@ https://code4fukui.github.io/monoimgmaker/
 2. The converted C source file will be downloaded automatically.
 
 ## License
-MIT License
+MIT License — see [LICENSE](LICENSE).
