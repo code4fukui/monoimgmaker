@@ -6,7 +6,7 @@ A web tool to convert JPG and PNG images into monochrome C language source files
 
 ## Demo
 
-**https://code4fukui.github.io/monoimgmaker/**
+**https://github.com/code4fukui/monoimgmaker
 
 The web interface provides a simple area to drag and drop an image file. The conversion happens in the browser, and the resulting C source file is downloaded automatically.
 
